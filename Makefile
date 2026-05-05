@@ -7,11 +7,11 @@ build:
 	@echo "Building..."
 	
 	
-	@go build -o main cmd/api/main.go
+	@go build -o qs cmd/qs/main.go
 
 # Run the application
 run:
-	@go run cmd/api/main.go
+	@go run cmd/qs/main.go
 
 # Test the application
 test:
@@ -21,7 +21,7 @@ test:
 # Clean the binary
 clean:
 	@echo "Cleaning..."
-	@rm -f main
+	@rm -f qs
 
 # Live Reload
 watch:
