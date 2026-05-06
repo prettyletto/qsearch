@@ -2,8 +2,10 @@ package dispatch
 
 import (
 	"fmt"
-	"qsearch/internal/domain/provider"
+	"sort"
 	"strings"
+
+	"github.com/prettyletto/qseach/internal/domain/provider"
 )
 
 type SearchRunner interface {
@@ -37,6 +39,59 @@ func NewDispatcher(search SearchRunner, providers []provider.Provider) (*Dispatc
 	}
 
 	return d, nil
+}
+
+func (d *Dispatcher) Dispatch(args []string) error {
+	if len(args) == 0 {
+
+		return d.printHelp()
+	}
+
+	first := normalize(args[0])
+
+	switch first {
+	case "help", "-h", "--help":
+		return d.printHelp()
+
+	}
+
+	p, ok := d.providers[first]
+	if !ok {
+		return fmt.Errorf("unkown provider %q", args[0])
+	}
+
+	return d.search.Run(p, args[1:])
+}
+
+func (d *Dispatcher) printHelp() error {
+	fmt.Println("usage: qs <provider> [query]")
+	fmt.Println()
+	fmt.Println("providers:")
+
+	names := d.providersNames()
+	for _, name := range names {
+		fmt.Printf("  %s\n", name)
+	}
+
+	return nil
+}
+
+func (d *Dispatcher) providersNames() []string {
+	seen := make(map[provider.Provider]bool)
+	names := make([]string, 0)
+
+	for _, p := range d.providers {
+		if seen[p] {
+			continue
+		}
+
+		names = append(names, p.Names()[0])
+
+		seen[p] = true
+	}
+
+	sort.Strings(names)
+	return names
 }
 
 func normalize(s string) string {

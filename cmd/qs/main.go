@@ -1,38 +1,32 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"os"
-	"strings"
-	"time"
 
-	"qsearch/internal/provider/google"
+	"github.com/prettyletto/qseach/internal/app/search"
+	"github.com/prettyletto/qseach/internal/dispatch"
+	"github.com/prettyletto/qseach/internal/domain/provider"
+	"github.com/prettyletto/qseach/internal/infra/browser"
+	"github.com/prettyletto/qseach/internal/providers/google"
 )
 
 func main() {
-	query := strings.TrimSpace(strings.Join(os.Args[1:], " "))
-	if query == "" {
-		fmt.Fprintln(os.Stderr, "usage: qs search terms")
-		os.Exit(2)
+	providers := []provider.Provider{
+		google.New(),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+	opener := browser.NewOpener()
+	searchRunner := search.NewRunner(opener)
 
-	suggestions, err := google.Suggestions(ctx, http.DefaultClient, query)
+	dispatcher, err := dispatch.NewDispatcher(searchRunner, providers)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "google suggestions: %v\n", err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if len(suggestions) == 0 {
-		fmt.Println(query)
-		return
-	}
-
-	for _, suggestion := range suggestions {
-		fmt.Println(suggestion)
+	if err := dispatcher.Dispatch(os.Args[1:]); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
