@@ -25,6 +25,16 @@ type styles struct {
 	selected lipgloss.Style
 }
 
+type theme struct {
+	text        lipgloss.TerminalColor
+	muted       lipgloss.TerminalColor
+	subtle      lipgloss.TerminalColor
+	panelBorder lipgloss.TerminalColor
+	rowBG       lipgloss.TerminalColor
+	keyBG       lipgloss.TerminalColor
+	tagFallback lipgloss.TerminalColor
+}
+
 type providerMeta struct {
 	icon string
 	name string
@@ -34,51 +44,74 @@ type providerMeta struct {
 	tagBG     lipgloss.Color
 }
 
+func defaultTheme() theme {
+	return theme{
+		text: lipgloss.AdaptiveColor{
+			Light: "#242424",
+			Dark:  "15",
+		},
+		muted: lipgloss.Color("8"),
+		subtle: lipgloss.AdaptiveColor{
+			Light: "#5A5A5A",
+			Dark:  "7",
+		},
+		panelBorder: lipgloss.Color("8"),
+		rowBG: lipgloss.AdaptiveColor{
+			Light: "#E8E4D8",
+			Dark:  "0",
+		},
+		keyBG:       lipgloss.Color("8"),
+		tagFallback: lipgloss.Color("8"),
+	}
+}
+
 func newStyles() styles {
+	t := defaultTheme()
+
 	return styles{
 		container: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#6C7086")).
+			BorderForeground(t.panelBorder).
 			Padding(1, 2).
 			Width(72),
 		input: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#CDD6F4")),
+			Foreground(t.text),
 		inputRow: lipgloss.NewStyle().
 			MarginBottom(1),
 		list: lipgloss.NewStyle().
 			MarginTop(1).
 			MarginBottom(1),
 		selected: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFFFF")).
-			Background(lipgloss.Color("#313244")).
+			Foreground(t.text).
+			Background(t.rowBG).
 			Bold(true).
 			Padding(0, 1).
 			Width(64),
 		suggestion: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#BAC2DE")).
+			Foreground(t.subtle).
 			Padding(0, 2).
 			Width(66),
 		footer: lipgloss.NewStyle().
 			BorderTop(true).
 			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("#313244")).
+			BorderForeground(t.muted).
 			PaddingTop(1),
 		keycap: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#CDD6F4")).
-			Background(lipgloss.Color("#313244")).
+			Foreground(t.text).
+			Background(t.keyBG).
 			Bold(true).
 			Padding(0, 1),
 		hintText: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6C7086")),
+			Foreground(t.muted),
 		tag: lipgloss.NewStyle().
-			Background(lipgloss.Color("#313244")).
+			Background(t.tagFallback).
 			Padding(0, 1),
 		tagIcon: lipgloss.NewStyle().
 			Bold(true),
 		tagText: lipgloss.NewStyle().
 			Bold(true),
 		tagSuffix: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6C7086")),
+			Foreground(t.muted),
 		tagLeftCap:  lipgloss.NewStyle(),
 		tagRightCap: lipgloss.NewStyle(),
 	}
@@ -128,8 +161,7 @@ func (s styles) providerTag(p provider.Provider) string {
 
 func (s styles) containerFor(width int) lipgloss.Style {
 	return s.container.
-		Width(width).
-		BorderForeground(lipgloss.Color("#45475A"))
+		Width(width)
 }
 
 func (s styles) selectedFor(p provider.Provider, width int) lipgloss.Style {

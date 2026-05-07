@@ -15,13 +15,32 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "init" {
+		force := len(os.Args) > 2 && os.Args[2] == "--force"
+
+		path, err := config.InitUserProvidersFile(force)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Println(path)
+		return
+	}
+
 	providers := []provider.Provider{
 		google.New(),
 		youtube.New(),
 		ytmusic.New(),
 	}
 
-	customProviders, err := config.LoadProviders("configs/providers.example.toml")
+	providersPath, err := config.EnsureUserProvidersFile()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	customProviders, err := config.LoadProviders(providersPath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
