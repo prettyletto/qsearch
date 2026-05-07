@@ -1,10 +1,7 @@
 package search
 
 import (
-	"context"
-	"fmt"
 	"strings"
-	"time"
 
 	"github.com/prettyletto/qsearch/internal/domain/provider"
 
@@ -39,20 +36,6 @@ func (r *Runner) Run(p provider.Provider, args []string) error {
 
 		query = result.Query
 		p = result.Provider
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	suggestions, err := p.Suggestions(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	if len(suggestions) > 0 {
-		for _, suggestion := range suggestions {
-			fmt.Println(suggestion)
-		}
 	}
 
 	finalURL := p.SearchURL(query)
