@@ -18,6 +18,7 @@ type Result struct {
 }
 
 type model struct {
+	styles      styles
 	input       textinput.Model
 	providers   []provider.Provider
 	provider    provider.Provider
@@ -43,6 +44,7 @@ func New(providers []provider.Provider, provider provider.Provider) model {
 		input:     input,
 		providers: providers,
 		provider:  provider,
+		styles:    newStyles(),
 	}
 }
 
@@ -142,25 +144,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	var b strings.Builder
 
-	b.WriteString("\n ")
-	b.WriteString("[")
-	b.WriteString(m.provider.Names()[0])
-	b.WriteString("]: ")
-	b.WriteString(m.input.View())
+	label := m.styles.provider.Render("[" + providerLabel(m.provider) + "]:")
+	input := m.styles.input.Render(m.input.View())
+
+	b.WriteString(label)
+	b.WriteString(" ")
+	b.WriteString(input)
 	b.WriteString("\n\n")
 
-	for i, suggestion := range m.suggestions {
-		cursor := " "
+	maxSuggestions := min(len(m.suggestions), 8)
+
+	for i := range maxSuggestions {
+		suggestion := m.suggestions[i]
+
 		if i == m.selected {
-			cursor = "> "
+			b.WriteString(m.styles.selected.Render("> " + suggestion))
+		} else {
+			b.WriteString(m.styles.suggestion.Render(" " + suggestion))
 		}
-		b.WriteString("  ")
-		b.WriteString(cursor)
-		b.WriteString(suggestion)
+
 		b.WriteString("\n")
 	}
+	b.WriteString("\n")
+	b.WriteString(m.styles.hint.Render("tab switch crt+g google ctrl+y youtube ctrl+u ytmusic esc close"))
 
-	return b.String()
+	return "\n" + m.styles.container.Render(b.String()) + "\n"
 }
 
 func (m model) switchProvider(p provider.Provider) (model, tea.Cmd) {
