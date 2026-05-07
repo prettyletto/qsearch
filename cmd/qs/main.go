@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/prettyletto/qsearch/internal/app/search"
+	"github.com/prettyletto/qsearch/internal/config"
 	"github.com/prettyletto/qsearch/internal/dispatch"
 	"github.com/prettyletto/qsearch/internal/domain/provider"
 	"github.com/prettyletto/qsearch/internal/infra/browser"
@@ -19,6 +20,14 @@ func main() {
 		youtube.New(),
 		ytmusic.New(),
 	}
+
+	customProviders, err := config.LoadProviders("configs/providers.example.toml")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	providers = append(providers, customProviders...)
 
 	opener := browser.NewOpener()
 	searchRunner := search.NewRunner(opener, providers)

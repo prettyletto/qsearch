@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/prettyletto/qsearch/internal/domain/provider"
 )
 
@@ -25,6 +26,8 @@ type model struct {
 	suggestions []string
 	selected    int
 	result      Result
+	width       int
+	height      int
 }
 
 type suggestionsMsg struct {
@@ -123,6 +126,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.suggestions = msg.suggestions
 		m.selected = 0
 		return m, nil
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.input.Width = m.contentWidth() - lipgloss.Width(m.styles.providerTag(m.provider))
 	}
 
 	oldValue := m.input.Value()
@@ -145,9 +152,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	var b strings.Builder
 
+	contentWidth := m.contentWidth()
 	label := m.styles.providerTag(m.provider)
-	input := m.styles.input.Render(m.input.View())
-	inputRow := m.styles.inputRow.Render(label + " " + input)
+
+	input := m.input
+	input.Width = max(contentWidth-lipgloss.Width(label)-3, 10)
+
+	inputView := m.styles.input.Render(input.View())
+	inputRow := m.styles.inputRow.Render(label + " " + inputView)
 
 	b.WriteString(inputRow)
 
@@ -158,9 +170,9 @@ func (m model) View() string {
 		suggestion := m.suggestions[i]
 
 		if i == m.selected {
-			list.WriteString(m.styles.selectedFor(m.provider).Render(suggestion))
+			list.WriteString(m.styles.selectedFor(m.provider, contentWidth).Render(suggestion))
 		} else {
-			list.WriteString(m.styles.suggestion.Render(suggestion))
+			list.WriteString(m.styles.suggestionFor(contentWidth).Render(suggestion))
 		}
 
 		list.WriteString("\n")
@@ -169,7 +181,7 @@ func (m model) View() string {
 	b.WriteString(m.styles.list.Render(list.String()))
 	b.WriteString(m.styles.footer.Render(m.styles.footerBar()))
 
-	return "\n" + m.styles.containerFor(m.provider).Render(b.String()) + "\n"
+	return "\n" + m.styles.containerFor(m.panelWidth()).Render(b.String()) + "\n"
 }
 
 func (m model) switchProvider(p provider.Provider) (model, tea.Cmd) {
@@ -207,6 +219,26 @@ func (m model) cycleProvider() (model, tea.Cmd) {
 	idx = (idx + 1) % len(m.providers)
 
 	return m.switchProvider(m.providers[idx])
+}
+
+func (m model) panelWidth() int {
+	if m.width <= 0 {
+		return 72
+	}
+
+	width := m.width - 4
+	if width > 92 {
+		return 92
+	}
+	if width < 56 {
+		return 56
+	}
+
+	return width
+}
+
+func (m model) contentWidth() int {
+	return m.panelWidth() - 6
 }
 
 func fetchSuggestions(p provider.Provider, query string) tea.Cmd {

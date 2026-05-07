@@ -126,21 +126,39 @@ func (s styles) providerTag(p provider.Provider) string {
 	return leftCap + icon + text + rightCap + s.tagSuffix.Render(":")
 }
 
-func (s styles) containerFor(p provider.Provider) lipgloss.Style {
+func (s styles) containerFor(width int) lipgloss.Style {
 	return s.container.
+		Width(width).
 		BorderForeground(lipgloss.Color("#45475A"))
 }
 
-func (s styles) selectedFor(p provider.Provider) lipgloss.Style {
+func (s styles) selectedFor(p provider.Provider, width int) lipgloss.Style {
 	meta := providerMetaFor(p)
 
 	return s.selected.
+		Width(width - 1).
 		BorderLeft(true).
 		BorderStyle(lipgloss.ThickBorder()).
 		BorderForeground(meta.tagBG)
 }
 
+func (s styles) suggestionFor(width int) lipgloss.Style {
+	return s.suggestion.Width(width)
+}
+
 func providerMetaFor(p provider.Provider) providerMeta {
+	if p, ok := p.(provider.MetadataProvider); ok {
+		meta := p.Meta()
+
+		return providerMeta{
+			icon:      meta.Icon,
+			name:      meta.Name,
+			iconColor: lipgloss.Color(meta.IconColor),
+			textColor: lipgloss.Color(meta.TextColor),
+			tagBG:     lipgloss.Color(meta.TagBG),
+		}
+	}
+
 	switch p.Names()[0] {
 	case "google":
 		return providerMeta{
