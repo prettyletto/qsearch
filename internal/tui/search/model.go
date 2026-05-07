@@ -91,7 +91,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.switchProviderByName("google")
 		case "ctrl+y":
 			return m.switchProviderByName("youtube")
-		case "ctrl+m":
+		case "ctrl+u":
 			return m.switchProviderByName("ytmusic")
 		case "enter":
 			query := strings.TrimSpace(m.input.Value())
