@@ -35,6 +35,7 @@ type suggestionsMsg struct {
 
 func New(providers []provider.Provider, provider provider.Provider) model {
 	input := textinput.New()
+	input.Prompt = " "
 	input.Placeholder = "Search " + provider.Names()[0]
 	input.Focus()
 	input.CharLimit = 200
@@ -144,31 +145,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	var b strings.Builder
 
-	label := m.styles.provider.Render("[" + providerLabel(m.provider) + "]:")
+	label := m.styles.providerTag(m.provider)
 	input := m.styles.input.Render(m.input.View())
+	inputRow := m.styles.inputRow.Render(label + " " + input)
 
-	b.WriteString(label)
-	b.WriteString(" ")
-	b.WriteString(input)
-	b.WriteString("\n\n")
+	b.WriteString(inputRow)
 
 	maxSuggestions := min(len(m.suggestions), 8)
+	var list strings.Builder
 
 	for i := range maxSuggestions {
 		suggestion := m.suggestions[i]
 
 		if i == m.selected {
-			b.WriteString(m.styles.selected.Render("> " + suggestion))
+			list.WriteString(m.styles.selectedFor(m.provider).Render(suggestion))
 		} else {
-			b.WriteString(m.styles.suggestion.Render(" " + suggestion))
+			list.WriteString(m.styles.suggestion.Render(suggestion))
 		}
 
-		b.WriteString("\n")
+		list.WriteString("\n")
 	}
-	b.WriteString("\n")
-	b.WriteString(m.styles.hint.Render("tab switch crt+g google ctrl+y youtube ctrl+u ytmusic esc close"))
 
-	return "\n" + m.styles.container.Render(b.String()) + "\n"
+	b.WriteString(m.styles.list.Render(list.String()))
+	b.WriteString(m.styles.footer.Render(m.styles.footerBar()))
+
+	return "\n" + m.styles.containerFor(m.provider).Render(b.String()) + "\n"
 }
 
 func (m model) switchProvider(p provider.Provider) (model, tea.Cmd) {
