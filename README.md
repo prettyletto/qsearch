@@ -103,10 +103,12 @@ Hyprland binds use this form:
 bind = MODS, key, exec, command
 ```
 
+The examples below use `SUPER SHIFT, SLASH` as an example binding. Replace it with whatever fits your dotfiles.
+
 ### Kitty
 
 ```ini
-bind = SUPER, S, exec, kitty --class qsearch -e qs g
+bind = SUPER SHIFT, SLASH, exec, kitty --class qsearch -e qs g
 
 windowrulev2 = float, class:^(qsearch)$
 windowrulev2 = center, class:^(qsearch)$
@@ -117,7 +119,7 @@ windowrulev2 = stayfocused, class:^(qsearch)$
 ### Foot
 
 ```ini
-bind = SUPER, S, exec, foot --app-id qsearch qs g
+bind = SUPER SHIFT, SLASH, exec, foot --app-id qsearch qs g
 
 windowrulev2 = float, app-id:^(qsearch)$
 windowrulev2 = center, app-id:^(qsearch)$
@@ -128,7 +130,7 @@ windowrulev2 = stayfocused, app-id:^(qsearch)$
 ### Alacritty
 
 ```ini
-bind = SUPER, S, exec, alacritty --class qsearch -e qs g
+bind = SUPER SHIFT, SLASH, exec, alacritty --class qsearch -e qs g
 
 windowrulev2 = float, class:^(qsearch)$
 windowrulev2 = center, class:^(qsearch)$
@@ -141,7 +143,7 @@ windowrulev2 = stayfocused, class:^(qsearch)$
 Ghostty GTK builds support `--class`, which sets the Wayland app-id/class. The class must be a valid GTK application ID, so use a dotted name:
 
 ```ini
-bind = SUPER, S, exec, ghostty --class=com.prettyletto.qsearch -e qs g
+bind = SUPER SHIFT, SLASH, exec, ghostty --class=com.prettyletto.qsearch -e qs g
 
 windowrulev2 = float, class:^(com.prettyletto.qsearch)$
 windowrulev2 = center, class:^(com.prettyletto.qsearch)$
@@ -154,7 +156,7 @@ If your Ghostty build does not support `--class`, use your terminal’s title/cl
 ### WezTerm
 
 ```ini
-bind = SUPER, S, exec, wezterm start --class qsearch -- qs g
+bind = SUPER SHIFT, SLASH, exec, wezterm start --class qsearch -- qs g
 
 windowrulev2 = float, class:^(qsearch)$
 windowrulev2 = center, class:^(qsearch)$
