@@ -23,8 +23,11 @@ func NewRunner(browser *browser.Opener, providers []provider.Provider) *Runner {
 
 func (r *Runner) Run(p provider.Provider, args []string) error {
 	query := strings.TrimSpace(strings.Join(args, " "))
+	usedTUI := false
 
 	if query == "" {
+		usedTUI = true
+
 		result, err := tuiSearch.Run(r.providers, p)
 		if err != nil {
 			return err
@@ -39,6 +42,10 @@ func (r *Runner) Run(p provider.Provider, args []string) error {
 	}
 
 	finalURL := p.SearchURL(query)
+
+	if usedTUI {
+		return r.browser.OpenAndWait(finalURL)
+	}
 
 	return r.browser.Open(finalURL)
 }

@@ -9,7 +9,11 @@ func NewOpener() *Opener {
 }
 
 func (o *Opener) Open(rawURL string) error {
-
 	cmd := exec.Command("xdg-open", rawURL)
 	return cmd.Start()
+}
+
+func (o *Opener) OpenAndWait(rawURL string) error {
+	cmd := exec.Command("xdg-open", rawURL)
+	return cmd.Run()
 }
