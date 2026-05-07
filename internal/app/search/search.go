@@ -13,21 +13,22 @@ import (
 )
 
 type Runner struct {
-	browser *browser.Opener
+	browser   *browser.Opener
+	providers []provider.Provider
 }
 
-func NewRunner(browser *browser.Opener) *Runner {
+func NewRunner(browser *browser.Opener, providers []provider.Provider) *Runner {
 	return &Runner{
 		browser,
+		providers,
 	}
 }
 
 func (r *Runner) Run(p provider.Provider, args []string) error {
-
 	query := strings.TrimSpace(strings.Join(args, " "))
 
 	if query == "" {
-		result, err := tuiSearch.Run(p)
+		result, err := tuiSearch.Run(r.providers, p)
 		if err != nil {
 			return err
 		}
@@ -37,13 +38,13 @@ func (r *Runner) Run(p provider.Provider, args []string) error {
 		}
 
 		query = result.Query
+		p = result.Provider
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	suggestions, err := p.Suggestions(ctx, query)
-
 	if err != nil {
 		return err
 	}

@@ -10,16 +10,18 @@ import (
 	"github.com/prettyletto/qsearch/internal/infra/browser"
 	"github.com/prettyletto/qsearch/internal/providers/google"
 	"github.com/prettyletto/qsearch/internal/providers/youtube"
+	"github.com/prettyletto/qsearch/internal/providers/ytmusic"
 )
 
 func main() {
 	providers := []provider.Provider{
 		google.New(),
 		youtube.New(),
+		ytmusic.New(),
 	}
 
 	opener := browser.NewOpener()
-	searchRunner := search.NewRunner(opener)
+	searchRunner := search.NewRunner(opener, providers)
 
 	dispatcher, err := dispatch.NewDispatcher(searchRunner, providers)
 	if err != nil {

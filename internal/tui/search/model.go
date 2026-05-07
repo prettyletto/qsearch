@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"time"
 
@@ -12,11 +13,13 @@ import (
 
 type Result struct {
 	Query    string
+	Provider provider.Provider
 	Canceled bool
 }
 
 type model struct {
 	input       textinput.Model
+	providers   []provider.Provider
 	provider    provider.Provider
 	suggestions []string
 	selected    int
@@ -29,7 +32,7 @@ type suggestionsMsg struct {
 	err         error
 }
 
-func New(provider provider.Provider) model {
+func New(providers []provider.Provider, provider provider.Provider) model {
 	input := textinput.New()
 	input.Placeholder = "Search " + provider.Names()[0]
 	input.Focus()
@@ -37,13 +40,14 @@ func New(provider provider.Provider) model {
 	input.Width = 60
 
 	return model{
-		input:    input,
-		provider: provider,
+		input:     input,
+		providers: providers,
+		provider:  provider,
 	}
 }
 
-func Run(p provider.Provider) (Result, error) {
-	m := New(p)
+func Run(providers []provider.Provider, active provider.Provider) (Result, error) {
+	m := New(providers, active)
 
 	finalModel, err := tea.NewProgram(m).Run()
 	if err != nil {
@@ -81,6 +85,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected--
 			}
 			return m, nil
+		case "tab":
+			return m.cycleProvider()
+		case "ctrl+g":
+			return m.switchProviderByName("google")
+		case "ctrl+y":
+			return m.switchProviderByName("youtube")
+		case "ctrl+m":
+			return m.switchProviderByName("ytmusic")
 		case "enter":
 			query := strings.TrimSpace(m.input.Value())
 
@@ -93,6 +105,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.result.Query = query
+			m.result.Provider = m.provider
 			return m, tea.Quit
 		}
 	case suggestionsMsg:
@@ -130,6 +143,9 @@ func (m model) View() string {
 	var b strings.Builder
 
 	b.WriteString("\n ")
+	b.WriteString("[")
+	b.WriteString(m.provider.Names()[0])
+	b.WriteString("]: ")
 	b.WriteString(m.input.View())
 	b.WriteString("\n\n")
 
@@ -145,6 +161,43 @@ func (m model) View() string {
 	}
 
 	return b.String()
+}
+
+func (m model) switchProvider(p provider.Provider) (model, tea.Cmd) {
+	m.provider = p
+	m.suggestions = nil
+	m.selected = 0
+
+	query := strings.TrimSpace(m.input.Value())
+	if query == "" {
+		return m, nil
+	}
+
+	return m, fetchSuggestions(m.provider, query)
+}
+
+func (m model) switchProviderByName(name string) (model, tea.Cmd) {
+	idx := slices.IndexFunc(m.providers, func(p provider.Provider) bool {
+		return p.Names()[0] == name
+	})
+	if idx == -1 {
+		return m, nil
+	}
+
+	return m.switchProvider(m.providers[idx])
+}
+
+func (m model) cycleProvider() (model, tea.Cmd) {
+	idx := slices.IndexFunc(m.providers, func(p provider.Provider) bool {
+		return p.Names()[0] == m.provider.Names()[0]
+	})
+	if idx == -1 {
+		return m, nil
+	}
+
+	idx = (idx + 1) % len(m.providers)
+
+	return m.switchProvider(m.providers[idx])
 }
 
 func fetchSuggestions(p provider.Provider, query string) tea.Cmd {
