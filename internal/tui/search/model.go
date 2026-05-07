@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/prettyletto/qseach/internal/domain/provider"
+	"github.com/prettyletto/qsearch/internal/domain/provider"
 )
 
 type Result struct {

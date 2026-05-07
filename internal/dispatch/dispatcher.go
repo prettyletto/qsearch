@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/prettyletto/qseach/internal/domain/provider"
+	"github.com/prettyletto/qsearch/internal/domain/provider"
 )
 
 type SearchRunner interface {

@@ -1,4 +1,4 @@
-package google
+package youtube
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	searchURL  = "https://google.com/search"
+	searchURL  = "https://youtube.com/results"
 	suggestURL = "https://suggestqueries.google.com/complete/search"
 )
 
@@ -25,14 +25,14 @@ func New() *Provider {
 }
 
 func (p *Provider) Names() []string {
-	return []string{"google", "g"}
+	return []string{"youtube", "y", "yt"}
 }
 
 func (p *Provider) SearchURL(query string) string {
 	u, _ := url.Parse(searchURL)
 
 	values := u.Query()
-	values.Set("q", query)
+	values.Set("search_query", query)
 
 	u.RawQuery = values.Encode()
 	return u.String()
@@ -43,6 +43,7 @@ func (p *Provider) Suggestions(ctx context.Context, query string) ([]string, err
 
 	values := u.Query()
 	values.Set("client", "firefox")
+	values.Set("ds", "yt")
 	values.Set("q", query)
 	values.Set("ie", "utf-8")
 	values.Set("oe", "utf-8")
@@ -61,7 +62,7 @@ func (p *Provider) Suggestions(ctx context.Context, query string) ([]string, err
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("google susggestions returned %s", resp.Status)
+		return nil, fmt.Errorf("youtube susggestions returned %s", resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -80,7 +81,7 @@ func parseSuggestions(body []byte) ([]string, error) {
 	}
 
 	if len(payload) < 2 {
-		return nil, fmt.Errorf("unexpected google suggestions response")
+		return nil, fmt.Errorf("unexpected youtube suggestions response")
 	}
 
 	var suggestions []string

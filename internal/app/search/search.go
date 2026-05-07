@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prettyletto/qseach/internal/domain/provider"
+	"github.com/prettyletto/qsearch/internal/domain/provider"
 
-	"github.com/prettyletto/qseach/internal/infra/browser"
-	tuiSearch "github.com/prettyletto/qseach/internal/tui/search"
+	"github.com/prettyletto/qsearch/internal/infra/browser"
+	tuiSearch "github.com/prettyletto/qsearch/internal/tui/search"
 )
 
 type Runner struct {

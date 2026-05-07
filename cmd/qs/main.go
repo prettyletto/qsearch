@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/prettyletto/qseach/internal/app/search"
-	"github.com/prettyletto/qseach/internal/dispatch"
-	"github.com/prettyletto/qseach/internal/domain/provider"
-	"github.com/prettyletto/qseach/internal/infra/browser"
-	"github.com/prettyletto/qseach/internal/providers/google"
+	"github.com/prettyletto/qsearch/internal/app/search"
+	"github.com/prettyletto/qsearch/internal/dispatch"
+	"github.com/prettyletto/qsearch/internal/domain/provider"
+	"github.com/prettyletto/qsearch/internal/infra/browser"
+	"github.com/prettyletto/qsearch/internal/providers/google"
+	"github.com/prettyletto/qsearch/internal/providers/youtube"
 )
 
 func main() {
 	providers := []provider.Provider{
 		google.New(),
+		youtube.New(),
 	}
 
 	opener := browser.NewOpener()
