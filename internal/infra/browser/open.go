@@ -1,6 +1,9 @@
 package browser
 
-import "os/exec"
+import (
+	"os/exec"
+	"syscall"
+)
 
 type Opener struct{}
 
@@ -9,11 +12,22 @@ func NewOpener() *Opener {
 }
 
 func (o *Opener) Open(rawURL string) error {
-	cmd := exec.Command("xdg-open", rawURL)
-	return cmd.Start()
+	return openDetached(rawURL)
 }
 
 func (o *Opener) OpenAndWait(rawURL string) error {
+	return openDetached(rawURL)
+}
+
+func openDetached(rawURL string) error {
 	cmd := exec.Command("xdg-open", rawURL)
-	return cmd.Run()
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true,
+	}
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	return cmd.Process.Release()
 }
