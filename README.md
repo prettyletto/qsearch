@@ -20,11 +20,13 @@ qs r linux window managers
 
 Without a query, QSearch opens the TUI. With a query, it opens the provider search URL immediately.
 
-<!-- gifs / screenshots can go here -->
+![QSearch usage example](assets/readme/usage-example.gif)
 
 ## Providers
 
 Built in:
+
+![QSearch provider switching](assets/readme/changing-providers.gif)
 
 ```text
 google: g
@@ -69,6 +71,8 @@ esc      exit
 ```
 
 The UI uses Nerd Font icons.
+
+![QSearch theme switching](assets/readme/changing-themes.gif)
 
 ## Install
 
