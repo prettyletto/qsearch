@@ -1,43 +1,50 @@
-# Simple Makefile for a Go project
+BINARY := qs
+MAIN := ./cmd/qs
+PREFIX ?= $(shell go env GOPATH)/bin
+INSTALL_PATH := $(PREFIX)/$(BINARY)
 
-# Build the application
-all: build test
+.PHONY: help all build run test install uninstall clean init init-force path
+
+help:
+	@echo "QSearch development commands"
+	@echo
+	@echo "  make build       Build ./$(BINARY)"
+	@echo "  make run         Run the Google TUI from source"
+	@echo "  make test        Run Go tests"
+	@echo "  make install     Install $(BINARY) to $(INSTALL_PATH)"
+	@echo "  make uninstall   Remove $(INSTALL_PATH)"
+	@echo "  make init        Create the user providers.toml if missing"
+	@echo "  make init-force  Overwrite providers.toml with defaults"
+	@echo "  make path        Print the install path"
+	@echo "  make clean       Remove local build output"
+
+all: test build
 
 build:
-	@echo "Building..."
-	
-	
-	@go build -o qs cmd/qs/main.go
+	go build -o $(BINARY) $(MAIN)
 
-# Run the application
 run:
-	@go run cmd/qs/main.go
+	go run $(MAIN) g
 
-# Test the application
 test:
-	@echo "Testing..."
-	@go test ./... -v
+	go test ./...
 
-# Clean the binary
+install:
+	go install $(MAIN)
+	@echo "Installed: $(INSTALL_PATH)"
+	@echo "Make sure this directory is in PATH: $(PREFIX)"
+
+uninstall:
+	rm -f $(INSTALL_PATH)
+
+init:
+	go run $(MAIN) init
+
+init-force:
+	go run $(MAIN) init --force
+
+path:
+	@echo $(INSTALL_PATH)
+
 clean:
-	@echo "Cleaning..."
-	@rm -f qs
-
-# Live Reload
-watch:
-	@if command -v air > /dev/null; then \
-            air; \
-            echo "Watching...";\
-        else \
-            read -p "Go's 'air' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
-            if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
-                go install github.com/air-verse/air@latest; \
-                air; \
-                echo "Watching...";\
-            else \
-                echo "You chose not to install air. Exiting..."; \
-                exit 1; \
-            fi; \
-        fi
-
-.PHONY: all build run test clean watch
+	rm -f $(BINARY)

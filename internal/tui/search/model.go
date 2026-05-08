@@ -55,7 +55,7 @@ func New(providers []provider.Provider, provider provider.Provider) model {
 func Run(providers []provider.Provider, active provider.Provider) (Result, error) {
 	m := New(providers, active)
 
-	finalModel, err := tea.NewProgram(m).Run()
+	finalModel, err := tea.NewProgram(m, tea.WithAltScreen()).Run()
 	if err != nil {
 		return Result{}, err
 	}
@@ -69,7 +69,7 @@ func Run(providers []provider.Provider, active provider.Provider) (Result, error
 }
 
 func (m model) Init() tea.Cmd {
-	return textinput.Blink
+	return tea.Batch(tea.ClearScreen, textinput.Blink)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -129,7 +129,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.input.Width = m.contentWidth() - lipgloss.Width(m.styles.providerTag(m.provider))
+		m.input.Width = max(m.contentWidth()-lipgloss.Width(m.styles.providerTag(m.provider))-3,
+			10)
 	}
 
 	oldValue := m.input.Value()
@@ -153,6 +154,8 @@ func (m model) View() string {
 	var b strings.Builder
 
 	contentWidth := m.contentWidth()
+	contentHeight := m.contentHeight()
+
 	label := m.styles.providerTag(m.provider)
 
 	input := m.input
@@ -161,12 +164,38 @@ func (m model) View() string {
 	inputView := m.styles.input.Render(input.View())
 	inputRow := m.styles.inputRow.Render(label + " " + inputView)
 
-	b.WriteString(inputRow)
+	footerView := m.styles.footer.
+		Width(contentWidth).
+		Render(m.styles.footerBar(contentWidth))
 
-	maxSuggestions := min(len(m.suggestions), 8)
+	usedHeight := lipgloss.Height(inputRow) + lipgloss.Height(footerView)
+	listHeight := contentHeight - usedHeight - 2
+	if listHeight < 0 {
+		listHeight = 0
+	}
+
+	visibleSuggestions := suggestionLimitForHeight(contentHeight, listHeight)
+
+	visibleStart := 0
+	visibleEnd := min(len(m.suggestions), visibleSuggestions)
+
+	if len(m.suggestions) > visibleSuggestions && visibleSuggestions > 0 {
+		visibleStart = m.selected - visibleSuggestions/2
+
+		if visibleStart < 0 {
+			visibleStart = 0
+		}
+
+		maxStart := len(m.suggestions) - visibleSuggestions
+		if visibleStart > maxStart {
+			visibleStart = maxStart
+		}
+
+		visibleEnd = visibleStart + visibleSuggestions
+	}
+
 	var list strings.Builder
-
-	for i := range maxSuggestions {
+	for i := visibleStart; i < visibleEnd; i++ {
 		suggestion := m.suggestions[i]
 
 		if i == m.selected {
@@ -178,10 +207,22 @@ func (m model) View() string {
 		list.WriteString("\n")
 	}
 
-	b.WriteString(m.styles.list.Render(list.String()))
-	b.WriteString(m.styles.footer.Render(m.styles.footerBar()))
+	listView := m.styles.list.Render(list.String())
 
-	return "\n" + m.styles.containerFor(m.panelWidth()).Render(b.String()) + "\n"
+	emptyLines := contentHeight -
+		lipgloss.Height(inputRow) -
+		lipgloss.Height(listView) -
+		lipgloss.Height(footerView)
+	if emptyLines > 0 {
+		listView += strings.Repeat("\n", emptyLines)
+	}
+
+	b.WriteString(inputRow)
+	b.WriteString(listView)
+	b.WriteString(footerView)
+	b.WriteString("\n")
+
+	return m.styles.containerFor(m.appWidth()).Render(b.String())
 }
 
 func (m model) switchProvider(p provider.Provider) (model, tea.Cmd) {
@@ -195,6 +236,58 @@ func (m model) switchProvider(p provider.Provider) (model, tea.Cmd) {
 	}
 
 	return m, fetchSuggestions(m.provider, query)
+}
+
+func (m model) appWidth() int {
+	if m.width <= 0 {
+		return 72
+	}
+
+	width := m.width
+	if width > 120 {
+		width = 120
+	}
+	if width < 56 {
+		width = 56
+	}
+
+	return width
+}
+
+func suggestionLimitForHeight(contentHeight, availableListHeight int) int {
+	if availableListHeight <= 0 {
+		return 0
+	}
+
+	limit := availableListHeight
+
+	if contentHeight <= 8 {
+		limit = min(limit, 3)
+	} else if contentHeight <= 12 {
+		limit = min(limit, 5)
+	}
+
+	return limit
+}
+
+func (m model) appHeight() int {
+	if m.height <= 0 {
+		return 18
+	}
+
+	if m.height <= 10 {
+		return 10
+	}
+
+	return m.height
+}
+
+func (m model) contentWidth() int {
+	return m.appWidth() - 4
+}
+
+func (m model) contentHeight() int {
+	return m.appHeight() - 1
 }
 
 func (m model) switchProviderByName(name string) (model, tea.Cmd) {
@@ -219,26 +312,6 @@ func (m model) cycleProvider() (model, tea.Cmd) {
 	idx = (idx + 1) % len(m.providers)
 
 	return m.switchProvider(m.providers[idx])
-}
-
-func (m model) panelWidth() int {
-	if m.width <= 0 {
-		return 72
-	}
-
-	width := m.width - 4
-	if width > 92 {
-		return 92
-	}
-	if width < 56 {
-		return 56
-	}
-
-	return width
-}
-
-func (m model) contentWidth() int {
-	return m.panelWidth() - 6
 }
 
 func fetchSuggestions(p provider.Provider, query string) tea.Cmd {

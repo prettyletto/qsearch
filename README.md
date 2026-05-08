@@ -1,45 +1,143 @@
 # QSearch
 
-QSearch is a Linux-first keyboard launcher for search providers.
+QSearch is a Linux-first search launcher for your terminal.
 
-Type fast, pick or refine a suggestion, press Enter, and QSearch opens the final search in your browser.
+It is not trying to be a browser, a search-results page, or a terminal clone of Google or YouTube. The goal is simpler:
 
 ```text
+type fast -> get suggestions -> choose or keep typing -> press enter -> open the browser
+```
+
+The binary is named:
+
+```sh
+qs
+```
+
+Typical use:
+
+```sh
 qs g
 qs yt
 qs ytmusic
 qs r golang bubbletea
 ```
 
-The binary name is:
+When you pass a query, QSearch opens the search immediately. When you do not pass a query, it opens the TUI.
 
-```bash
-qs
+```sh
+qs g golang channels
+# opens Google immediately
+
+qs g
+# opens the TUI with Google selected
 ```
+
+## Features
+
+- Fast CLI-first search launcher
+- TUI prompt for interactive searches
+- Google, YouTube, and YouTube Music providers
+- Suggestions/autocomplete for built-in providers
+- Custom search-only providers from `providers.toml`
+- Browser opening through `xdg-open`
+- Provider switching inside the TUI
+- Nerd Font-friendly provider icons and keycaps
+
+## Requirements
+
+You need:
+
+- Linux
+- Go
+- `xdg-open`
+- a terminal with a Nerd Font configured
+
+For the best experience, use QSearch from a small floating terminal window. It works fine in a normal terminal too.
 
 ## Install
 
-From source while developing:
+From this repo:
 
-```bash
-go build -o qs ./cmd/qs/main.go
+```sh
+make install
 ```
 
-Install with Go:
+That installs `qs` into:
 
-```bash
-go install github.com/prettyletto/qsearch/cmd/qs@latest
+```sh
+$(go env GOPATH)/bin
 ```
 
-Make sure your Go bin directory is in `PATH`:
+Make sure that directory is in your shell `PATH`:
 
-```bash
+```sh
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
+For a permanent shell setup, put that line in your shell config, for example `~/.zshrc`, `~/.bashrc`, or your fish equivalent.
+
+You can also build a local binary without installing:
+
+```sh
+make build
+./qs g
+```
+
+Or install directly with Go:
+
+```sh
+go install github.com/prettyletto/qsearch/cmd/qs@latest
+```
+
+## Usage
+
+Show help:
+
+```sh
+qs help
+```
+
+Open the TUI with Google:
+
+```sh
+qs g
+```
+
+Search immediately:
+
+```sh
+qs g linux clipboard manager
+qs yt bubble tea tui
+qs ytmusic radiohead
+```
+
+Built-in providers:
+
+```text
+google, g
+youtube, y, yt
+ytmusic, ym, music
+```
+
+Custom providers are loaded from your config file and can add names like `r` for Reddit or `c` for ChatGPT.
+
+## TUI Keys
+
+Inside the TUI:
+
+```text
+tab      switch provider
+up/down  select suggestion
+enter    open selected suggestion or typed query
+esc      exit
+```
+
+The TUI expects a Nerd Font. If symbols look wrong, fix the terminal font first.
+
 ## Config
 
-QSearch creates a provider config on first run:
+QSearch creates this file on first run:
 
 ```text
 ~/.config/qsearch/providers.toml
@@ -51,19 +149,19 @@ If `XDG_CONFIG_HOME` is set, it uses:
 $XDG_CONFIG_HOME/qsearch/providers.toml
 ```
 
-Create or restore the default provider config:
+Create the default config:
 
-```bash
+```sh
 qs init
 ```
 
-Overwrite it with defaults:
+Overwrite it with the defaults:
 
-```bash
+```sh
 qs init --force
 ```
 
-Custom providers are search-only for now. They use `{{query}}` as the escaped query placeholder:
+The default custom providers look like this:
 
 ```toml
 [[providers]]
@@ -85,193 +183,156 @@ icon_color = "#FFFFFF"
 text_color = "#FFFFFF"
 ```
 
-Built-in providers currently include Google, YouTube, and YouTube Music with suggestions.
-
-## Hyprland
-
-QSearch is designed to be launched inside a small floating terminal.
-
-The recommended shape is:
-
-```text
-keybind -> terminal with qsearch class/app-id -> qs g -> floating centered window
-```
-
-Hyprland binds use this form:
-
-```ini
-bind = MODS, key, exec, command
-```
-
-The examples below use `SUPER SHIFT, SLASH` as an example binding. Replace it with whatever fits your dotfiles.
-
-### Kitty
-
-```ini
-bind = SUPER SHIFT, SLASH, exec, kitty --class qsearch -e qs g
-
-windowrulev2 = float, class:^(qsearch)$
-windowrulev2 = center, class:^(qsearch)$
-windowrulev2 = size 760 420, class:^(qsearch)$
-windowrulev2 = stayfocused, class:^(qsearch)$
-```
-
-### Foot
-
-```ini
-bind = SUPER SHIFT, SLASH, exec, foot --app-id qsearch qs g
-
-windowrulev2 = float, app-id:^(qsearch)$
-windowrulev2 = center, app-id:^(qsearch)$
-windowrulev2 = size 760 420, app-id:^(qsearch)$
-windowrulev2 = stayfocused, app-id:^(qsearch)$
-```
-
-### Alacritty
-
-```ini
-bind = SUPER SHIFT, SLASH, exec, alacritty --class qsearch -e qs g
-
-windowrulev2 = float, class:^(qsearch)$
-windowrulev2 = center, class:^(qsearch)$
-windowrulev2 = size 760 420, class:^(qsearch)$
-windowrulev2 = stayfocused, class:^(qsearch)$
-```
-
-### Ghostty
-
-Ghostty GTK builds support `--class`, which sets the Wayland app-id/class. The class must be a valid GTK application ID, so use a dotted name:
-
-```ini
-bind = SUPER SHIFT, SLASH, exec, ghostty --class=com.prettyletto.qsearch -e qs g
-
-windowrulev2 = float, class:^(com.prettyletto.qsearch)$
-windowrulev2 = center, class:^(com.prettyletto.qsearch)$
-windowrulev2 = size 760 420, class:^(com.prettyletto.qsearch)$
-windowrulev2 = stayfocused, class:^(com.prettyletto.qsearch)$
-```
-
-If your Ghostty build does not support `--class`, use your terminal’s title/class support or switch this binding to Kitty, Foot, Alacritty, or WezTerm.
-
-### WezTerm
-
-```ini
-bind = SUPER SHIFT, SLASH, exec, wezterm start --class qsearch -- qs g
-
-windowrulev2 = float, class:^(qsearch)$
-windowrulev2 = center, class:^(qsearch)$
-windowrulev2 = size 760 420, class:^(qsearch)$
-windowrulev2 = stayfocused, class:^(qsearch)$
-```
+Custom providers are search-only for now. Use `{{query}}` where the escaped search text should go.
 
 ## Omarchy
 
-Omarchy is configured through user dotfiles in `~/.config`. Prefer editing your user Hyprland config rather than files under `~/.local/share/omarchy`.
+QSearch works nicely with Omarchy because Omarchy already has a TUI launcher:
 
-The best Omarchy integration is to use Omarchy's TUI launcher:
+```sh
+omarchy-launch-tui
+```
+
+The basic keybind in `~/.config/hypr/bindings.conf` is:
 
 ```ini
 bindd = SUPER SHIFT, SLASH, QSearch, exec, omarchy-launch-tui qs g
 ```
 
-`omarchy-launch-tui` opens QSearch in Omarchy's configured terminal and sets the app id/class from the command name:
+However, there is one important detail: Hyprland/Omarchy may not see your shell `PATH`. If you installed QSearch with Go and the keybind does nothing, use the full path to `qs`.
+
+Find it with:
+
+```sh
+go env GOPATH
+```
+
+Usually the binary will be here:
+
+```text
+/home/your-user/go/bin/qs
+```
+
+Then bind that full path:
+
+```ini
+bindd = SUPER SHIFT, SLASH, QSearch, exec, omarchy-launch-tui /home/your-user/go/bin/qs g
+```
+
+The Omarchy launcher sets the app id/class from the binary name:
 
 ```text
 qs -> org.omarchy.qs
 ```
 
-Add this window rule so QSearch uses Omarchy's existing floating TUI behavior, like `btop`, `impala`, and `wiremix`:
+To make it floating and centered with your own size, add direct window rules in `~/.config/hypr/bindings.conf`:
 
 ```ini
-windowrule = tag +floating-window, match:class org.omarchy.qs
+windowrule = float on, match:class org.omarchy.qs
+windowrule = center on, match:class org.omarchy.qs
+windowrule = size 900 420, match:class org.omarchy.qs
 ```
 
-Omarchy already defines the shared `floating-window` behavior:
+Do not tag QSearch as `floating-window` if you want a custom size. Omarchy's default floating-window tag applies its own shared size:
 
 ```ini
-windowrule = float on, match:tag floating-window
-windowrule = center on, match:tag floating-window
 windowrule = size 875 600, match:tag floating-window
 ```
 
-If you are testing a local repo build, this also works because Omarchy uses `basename` for the app id:
+After changing Hyprland config:
+
+```sh
+omarchy-restart-hyprctl
+hyprctl configerrors
+```
+
+Then close and reopen QSearch. Window rules apply most reliably when the window is newly created.
+
+## Plain Hyprland
+
+If you are not using Omarchy, launch QSearch in a terminal with a stable class or app id, then write rules for that class.
+
+Kitty:
 
 ```ini
-bindd = SUPER SHIFT, SLASH, QSearch, exec, omarchy-launch-tui /home/you/path/to/qsearch/qs g
+bind = SUPER SHIFT, SLASH, exec, kitty --class qsearch -e qs g
+
+windowrule = float on, match:class qsearch
+windowrule = center on, match:class qsearch
+windowrule = size 900 420, match:class qsearch
 ```
 
-The class is still:
-
-```text
-org.omarchy.qs
-```
-
-Recommended workflow:
-
-1. Open the Omarchy menu with `Super + Alt + Space`.
-2. Go to Setup / Configs / Hyprland.
-3. Add the `omarchy-launch-tui` bind and the `org.omarchy.qs` window rule.
-4. Reload Hyprland or let Omarchy restart the relevant process after saving.
-
-If you do not want to use Omarchy's wrapper, use one of the plain Hyprland terminal snippets above instead. That path requires terminal-specific class/app-id flags such as `kitty --class`, `foot --app-id`, or `alacritty --class`.
-
-If you want a tiny wrapper script, put this somewhere in `PATH`, for example `~/.local/bin/qsearch-prompt`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-exec omarchy-launch-tui qs g
-```
-
-Then bind the script:
+Foot:
 
 ```ini
-bindd = SUPER SHIFT, SLASH, QSearch, exec, qsearch-prompt
+bind = SUPER SHIFT, SLASH, exec, foot --app-id qsearch qs g
+
+windowrule = float on, match:class qsearch
+windowrule = center on, match:class qsearch
+windowrule = size 900 420, match:class qsearch
 ```
 
-Make it executable:
+Ghostty:
 
-```bash
-chmod +x ~/.local/bin/qsearch-prompt
+```ini
+bind = SUPER SHIFT, SLASH, exec, ghostty --class=com.prettyletto.qsearch -e qs g
+
+windowrule = float on, match:class com.prettyletto.qsearch
+windowrule = center on, match:class com.prettyletto.qsearch
+windowrule = size 900 420, match:class com.prettyletto.qsearch
 ```
 
-## Theme
-
-QSearch is meant to feel native to your terminal theme.
-
-Neutral UI colors use the terminal palette where possible, with small light-theme contrast fixes. Provider tag colors and icons come from built-in provider metadata or `providers.toml`.
-
-For the best visual result, use a Nerd Font-compatible terminal font. If an icon looks wrong, edit or remove the provider `icon` in:
-
-```text
-~/.config/qsearch/providers.toml
-```
+If your compositor uses older `windowrulev2` syntax, translate the same idea to your local Hyprland version.
 
 ## Development
 
-Run tests:
+Common commands:
 
-```bash
-go test ./...
+```sh
+make help
+make test
+make build
+make run
+make install
 ```
 
-Build:
+Build output:
 
-```bash
-go build -o qs ./cmd/qs/main.go
+```text
+./qs
 ```
 
-Run:
+Run from source:
 
-```bash
-./qs g
+```sh
+go run ./cmd/qs g
 ```
 
-## References
+Run the installed binary:
 
-- Hyprland bind syntax: https://wiki.hypr.land/Configuring/Binds/
-- Hyprland window rules: https://wiki.hypr.land/Configuring/Window-Rules/
-- Omarchy dotfiles and config ownership: https://learn.omacom.io/books/2/pages/65
-- Omarchy navigation and menu shortcuts: https://learn.omacom.io/2/the-omarchy-manual
-- Ghostty class/app-id behavior: https://man.archlinux.org/man/ghostty.1.en
+```sh
+qs g
+```
+
+Clean local build output:
+
+```sh
+make clean
+```
+
+## Project Shape
+
+The project is intentionally small:
+
+```text
+cmd/qs/main.go                    app entrypoint
+internal/dispatch                 provider argument dispatch
+internal/app/search               search flow coordination
+internal/domain/provider          provider interfaces
+internal/providers                built-in providers
+internal/tui/search               Bubble Tea TUI
+internal/infra/browser            xdg-open integration
+internal/config                   providers.toml loading
+```
+
+QSearch should stay focused: choose a provider, get suggestions, open the final browser URL.

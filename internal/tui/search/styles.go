@@ -70,17 +70,16 @@ func newStyles() styles {
 
 	return styles{
 		container: lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(t.panelBorder).
-			Padding(1, 2).
+			PaddingTop(1).
+			PaddingLeft(1).
+			PaddingRight(1).
 			Width(72),
 		input: lipgloss.NewStyle().
 			Foreground(t.text),
 		inputRow: lipgloss.NewStyle().
 			MarginBottom(1),
 		list: lipgloss.NewStyle().
-			MarginTop(1).
-			MarginBottom(1),
+			MarginTop(1),
 		selected: lipgloss.NewStyle().
 			Foreground(t.text).
 			Background(t.rowBG).
@@ -92,13 +91,13 @@ func newStyles() styles {
 			Padding(0, 2).
 			Width(66),
 		footer: lipgloss.NewStyle().
+			Foreground(t.muted).
 			BorderTop(true).
 			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(t.muted).
-			PaddingTop(1),
+			BorderForeground(t.muted),
 		keycap: lipgloss.NewStyle().
-			Foreground(t.text).
-			Background(t.keyBG).
+			Foreground(lipgloss.Color("15")).
+			Background(lipgloss.Color("238")).
 			Bold(true).
 			Padding(0, 1),
 		hintText: lipgloss.NewStyle().
@@ -117,20 +116,24 @@ func newStyles() styles {
 	}
 }
 
-func (s styles) footerBar() string {
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		s.keycap.Render("tab"),
-		s.hintText.Render(" switch  "),
-		s.keycap.Render("ctrl+g"),
-		s.hintText.Render(" google  "),
-		s.keycap.Render("ctrl+y"),
-		s.hintText.Render(" youtube  "),
-		s.keycap.Render("ctrl+u"),
-		s.hintText.Render(" music  "),
-		s.keycap.Render("esc"),
-		s.hintText.Render(" close"),
-	)
+func (s styles) footerBar(width int) string {
+	item := func(key, label string) string {
+		return s.keycap.Render(key) + s.hintText.Render(" "+label)
+	}
+
+	spacer := s.hintText.Render("  ")
+
+	if width < 64 {
+		return item("tab", "provider") + spacer + item("esc", "exit")
+	}
+
+	return item("tab", "provider") +
+		spacer +
+		item("↑/↓", "select") +
+		spacer +
+		item("enter", "open") +
+		spacer +
+		item("esc", "exit")
 }
 
 func (s styles) providerTag(p provider.Provider) string {
