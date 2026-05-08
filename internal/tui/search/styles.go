@@ -1,6 +1,7 @@
 package search
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/prettyletto/qsearch/internal/domain/provider"
 )
@@ -42,6 +43,12 @@ type providerMeta struct {
 	iconColor lipgloss.Color
 	textColor lipgloss.Color
 	tagBG     lipgloss.Color
+}
+
+type footerHint struct {
+	binding key.Binding
+	key     string
+	label   string
 }
 
 func defaultTheme() theme {
@@ -116,24 +123,35 @@ func newStyles() styles {
 	}
 }
 
-func (s styles) footerBar(width int) string {
-	item := func(key, label string) string {
-		return s.keycap.Render(key) + s.hintText.Render(" "+label)
-	}
-
+func (s styles) footerBar(width int, hints []footerHint) string {
 	spacer := s.hintText.Render("  ")
+	items := make([]string, 0, len(hints))
 
-	if width < 64 {
-		return item("tab", "provider") + spacer + item("esc", "exit")
+	for _, hint := range hints {
+		keyText, label := hint.key, hint.label
+		if keyText == "" || label == "" {
+			help := hint.binding.Help()
+			if keyText == "" {
+				keyText = help.Key
+			}
+			if label == "" {
+				label = help.Desc
+			}
+		}
+
+		items = append(items, s.keycap.Render(keyText)+s.hintText.Render(" "+label))
 	}
 
-	return item("tab", "provider") +
-		spacer +
-		item("↑/↓", "select") +
-		spacer +
-		item("enter", "open") +
-		spacer +
-		item("esc", "exit")
+	if len(items) == 0 {
+		return ""
+	}
+
+	line := items[0]
+	for _, item := range items[1:] {
+		line += spacer + item
+	}
+
+	return line
 }
 
 func (s styles) providerTag(p provider.Provider) string {

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -20,6 +21,7 @@ type Result struct {
 
 type model struct {
 	styles      styles
+	keys        keyMap
 	input       textinput.Model
 	providers   []provider.Provider
 	provider    provider.Provider
@@ -36,6 +38,55 @@ type suggestionsMsg struct {
 	err         error
 }
 
+type keyMap struct {
+	Provider key.Binding
+	Up       key.Binding
+	Down     key.Binding
+	Open     key.Binding
+	Exit     key.Binding
+
+	Google  key.Binding
+	YouTube key.Binding
+	YTMusic key.Binding
+}
+
+func newKeyMap() keyMap {
+	return keyMap{
+		Provider: key.NewBinding(
+			key.WithKeys("tab"),
+			key.WithHelp("tab", "provider"),
+		),
+		Up: key.NewBinding(
+			key.WithKeys("up", "ctrl+p"),
+			key.WithHelp("^p", "up"),
+		),
+		Down: key.NewBinding(
+			key.WithKeys("down", "ctrl+n"),
+			key.WithHelp("^n", "down"),
+		),
+		Open: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "open"),
+		),
+		Exit: key.NewBinding(
+			key.WithKeys("esc", "ctrl+c"),
+			key.WithHelp("esc", "exit"),
+		),
+		Google: key.NewBinding(
+			key.WithKeys("ctrl+g"),
+			key.WithHelp("^g", "google"),
+		),
+		YouTube: key.NewBinding(
+			key.WithKeys("ctrl+y"),
+			key.WithHelp("^y", "youtube"),
+		),
+		YTMusic: key.NewBinding(
+			key.WithKeys("ctrl+u"),
+			key.WithHelp("^u", "ytmusic"),
+		),
+	}
+}
+
 func New(providers []provider.Provider, provider provider.Provider) model {
 	input := textinput.New()
 	input.Prompt = " "
@@ -49,6 +100,7 @@ func New(providers []provider.Provider, provider provider.Provider) model {
 		providers: providers,
 		provider:  provider,
 		styles:    newStyles(),
+		keys:      newKeyMap(),
 	}
 }
 
@@ -77,29 +129,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc", "ctrl+c":
+		switch {
+		case key.Matches(msg, m.keys.Exit):
 			m.result.Canceled = true
 			return m, tea.Quit
-		case "down", "ctrl+n":
+		case key.Matches(msg, m.keys.Down):
 			if len(m.suggestions) > 0 && m.selected < len(m.suggestions)-1 {
 				m.selected++
 			}
 			return m, nil
-		case "up", "ctrl+p":
+		case key.Matches(msg, m.keys.Up):
 			if len(m.suggestions) > 0 && m.selected > 0 {
 				m.selected--
 			}
 			return m, nil
-		case "tab":
+		case key.Matches(msg, m.keys.Provider):
 			return m.cycleProvider()
-		case "ctrl+g":
+		case key.Matches(msg, m.keys.Google):
 			return m.switchProviderByName("google")
-		case "ctrl+y":
+		case key.Matches(msg, m.keys.YouTube):
 			return m.switchProviderByName("youtube")
-		case "ctrl+u":
+		case key.Matches(msg, m.keys.YTMusic):
 			return m.switchProviderByName("ytmusic")
-		case "enter":
+		case key.Matches(msg, m.keys.Open):
 			query := strings.TrimSpace(m.input.Value())
 
 			if len(m.suggestions) > 0 && m.selected >= 0 {
@@ -166,7 +218,7 @@ func (m model) View() string {
 
 	footerView := m.styles.footer.
 		Width(contentWidth).
-		Render(m.styles.footerBar(contentWidth))
+		Render(m.styles.footerBar(contentWidth, m.footerHints(contentWidth)))
 
 	usedHeight := lipgloss.Height(inputRow) + lipgloss.Height(footerView)
 	listHeight := contentHeight - usedHeight - 2
@@ -288,6 +340,22 @@ func (m model) contentWidth() int {
 
 func (m model) contentHeight() int {
 	return m.appHeight() - 1
+}
+
+func (m model) footerHints(width int) []footerHint {
+	if width < 64 {
+		return []footerHint{
+			{binding: m.keys.Provider},
+			{binding: m.keys.Exit},
+		}
+	}
+
+	return []footerHint{
+		{binding: m.keys.Provider},
+		{key: "↑/↓", label: "select"},
+		{binding: m.keys.Open},
+		{binding: m.keys.Exit},
+	}
 }
 
 func (m model) switchProviderByName(name string) (model, tea.Cmd) {

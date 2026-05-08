@@ -65,7 +65,7 @@ Use `{{query}}` where the escaped search text should go.
 
 ```text
 tab      switch provider
-up/down  select suggestion
+up/down  select suggestion (ctrl+p/ctrl+n also work, i use vim btw)
 enter    open
 esc      exit
 ```
@@ -77,10 +77,28 @@ The UI uses Nerd Font icons.
 ## Install
 
 ```sh
+go install github.com/prettyletto/qsearch/cmd/qs@latest
+```
+
+Make sure Go's bin directory is in your `PATH`:
+
+```sh
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+Then run:
+
+```sh
+qs g
+```
+
+For local development, you can also install from the cloned repo:
+
+```sh
 make install
 ```
 
-Or build locally:
+Or build a local binary without installing:
 
 ```sh
 make build
@@ -92,6 +110,9 @@ make build
 Omarchy:
 
 ```ini
+windowrule = float on, match:class org.omarchy.qs
+windowrule = center on, match:class org.omarchy.qs
+windowrule = size 840 320, match:class org.omarchy.qs
 bindd = SUPER SHIFT, SLASH, QSearch, exec, omarchy-launch-tui qs g
 ```
 
@@ -113,7 +134,6 @@ windowrule = size 900 420, match:class qsearch
 make test
 make build
 make run
-make install
 ```
 
 Run from source:
