@@ -64,10 +64,11 @@ Use `{{query}}` where the escaped search text should go.
 ## TUI
 
 ```text
-tab      switch provider
-up/down  select suggestion (ctrl+p/ctrl+n also work, i use vim btw)
-enter    open
-esc      exit
+tab         switch provider
+shift+tab   switch provider back
+up/down     select suggestion (ctrl+p/ctrl+n also work, i use vim btw)
+enter       open
+esc         exit
 ```
 
 The UI uses Nerd Font icons.

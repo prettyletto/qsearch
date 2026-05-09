@@ -39,11 +39,12 @@ type suggestionsMsg struct {
 }
 
 type keyMap struct {
-	Provider key.Binding
-	Up       key.Binding
-	Down     key.Binding
-	Open     key.Binding
-	Exit     key.Binding
+	Provider     key.Binding
+	ProviderBack key.Binding
+	Up           key.Binding
+	Down         key.Binding
+	Open         key.Binding
+	Exit         key.Binding
 
 	Google  key.Binding
 	YouTube key.Binding
@@ -55,6 +56,10 @@ func newKeyMap() keyMap {
 		Provider: key.NewBinding(
 			key.WithKeys("tab"),
 			key.WithHelp("tab", "provider"),
+		),
+		ProviderBack: key.NewBinding(
+			key.WithKeys("shift+tab"),
+			key.WithHelp("shift+tab", "provider back"),
 		),
 		Up: key.NewBinding(
 			key.WithKeys("up", "ctrl+p"),
@@ -145,6 +150,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case key.Matches(msg, m.keys.Provider):
 			return m.cycleProvider()
+		case key.Matches(msg, m.keys.ProviderBack):
+			return m.cycleProviderBack()
 		case key.Matches(msg, m.keys.Google):
 			return m.switchProviderByName("google")
 		case key.Matches(msg, m.keys.YouTube):
@@ -381,6 +388,20 @@ func (m model) cycleProvider() (model, tea.Cmd) {
 
 	return m.switchProvider(m.providers[idx])
 }
+
+func (m model) cycleProviderBack() (model, tea.Cmd) {
+	idx := slices.IndexFunc(m.providers, func(p provider.Provider) bool {
+		return p.Names()[0] == m.provider.Names()[0]
+	})
+	if idx == -1 {
+		return m, nil
+	}
+
+	idx = (idx - 1 + len(m.providers)) % len(m.providers)
+
+	return m.switchProvider(m.providers[idx])
+}
+
 
 func fetchSuggestions(p provider.Provider, query string) tea.Cmd {
 	return func() tea.Msg {
