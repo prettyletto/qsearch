@@ -22,6 +22,7 @@ func NewRunner(browser *browser.Opener, providers []provider.Provider) *Runner {
 }
 
 func (r *Runner) Run(p provider.Provider, args []string) error {
+	newWindow := false
 	query := strings.TrimSpace(strings.Join(args, " "))
 	usedTUI := false
 
@@ -39,9 +40,14 @@ func (r *Runner) Run(p provider.Provider, args []string) error {
 
 		query = result.Query
 		p = result.Provider
+		newWindow = result.NewWindow
 	}
 
 	finalURL := p.SearchURL(query)
+
+	if newWindow {
+		return r.browser.OpenNewWindow(finalURL)
+	}
 
 	if usedTUI {
 		return r.browser.OpenAndWait(finalURL)

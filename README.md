@@ -68,6 +68,7 @@ tab         switch provider
 shift+tab   switch provider back
 up/down     select suggestion (ctrl+p/ctrl+n also work, i use vim btw)
 enter       open
+alt+enter   open in new window
 esc         exit
 ```
 

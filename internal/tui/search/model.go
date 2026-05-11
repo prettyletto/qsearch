@@ -14,9 +14,10 @@ import (
 )
 
 type Result struct {
-	Query    string
-	Provider provider.Provider
-	Canceled bool
+	Query     string
+	Provider  provider.Provider
+	NewWindow bool
+	Canceled  bool
 }
 
 type model struct {
@@ -39,12 +40,13 @@ type suggestionsMsg struct {
 }
 
 type keyMap struct {
-	Provider     key.Binding
-	ProviderBack key.Binding
-	Up           key.Binding
-	Down         key.Binding
-	Open         key.Binding
-	Exit         key.Binding
+	Provider      key.Binding
+	ProviderBack  key.Binding
+	Up            key.Binding
+	Down          key.Binding
+	Open          key.Binding
+	OpenNewWindow key.Binding
+	Exit          key.Binding
 
 	Google  key.Binding
 	YouTube key.Binding
@@ -72,6 +74,10 @@ func newKeyMap() keyMap {
 		Open: key.NewBinding(
 			key.WithKeys("enter"),
 			key.WithHelp("enter", "open"),
+		),
+		OpenNewWindow: key.NewBinding(
+			key.WithKeys("alt+enter"),
+			key.WithHelp("alt+enter", "open+"),
 		),
 		Exit: key.NewBinding(
 			key.WithKeys("esc", "ctrl+c"),
@@ -172,8 +178,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.result.Query = query
 			m.result.Provider = m.provider
 			return m, tea.Quit
+		case key.Matches(msg, m.keys.OpenNewWindow):
+			query := strings.TrimSpace(m.input.Value())
+
+			if len(m.suggestions) > 0 && m.selected >= 0 {
+				query = m.suggestions[m.selected]
+			}
+
+			if query == "" {
+				return m, nil
+			}
+
+			m.result.Query = query
+			m.result.Provider = m.provider
+			m.result.NewWindow = true
+			return m, tea.Quit
 		}
 	case suggestionsMsg:
+
 		if msg.err != nil {
 			return m, nil
 		}
@@ -361,6 +383,7 @@ func (m model) footerHints(width int) []footerHint {
 		{binding: m.keys.Provider},
 		{key: "↑/↓", label: "select"},
 		{binding: m.keys.Open},
+		{binding: m.keys.OpenNewWindow},
 		{binding: m.keys.Exit},
 	}
 }
@@ -401,7 +424,6 @@ func (m model) cycleProviderBack() (model, tea.Cmd) {
 
 	return m.switchProvider(m.providers[idx])
 }
-
 
 func fetchSuggestions(p provider.Provider, query string) tea.Cmd {
 	return func() tea.Msg {
